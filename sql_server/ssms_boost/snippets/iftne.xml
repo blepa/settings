@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-16"?>
+<AutoReplacement xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Token>iftne</Token>
+  <Name>if_table_not_exists</Name>
+  <CaseSensitive>false</CaseSensitive>
+  <SelectReplacement>false</SelectReplacement>
+  <Replacement>IF NOT EXISTS (SELECT 1 FROM dbo.sysobjects WHERE id = OBJECT_ID('[dbo].[table]') AND OBJECTPROPERTY(id, 'IsUserTable') = 1) 
+^</Replacement>
+  <CursorPositionMarker>^</CursorPositionMarker>
+</AutoReplacement>
