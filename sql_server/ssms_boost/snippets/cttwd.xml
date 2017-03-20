@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-16"?>
+<AutoReplacement xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Token>cttwd</Token>
+  <Name>create_temp_table_with_drop</Name>
+  <CaseSensitive>false</CaseSensitive>
+  <SelectReplacement>false</SelectReplacement>
+  <Replacement>IF OBJECT_ID('tempdb..#tmp') IS NOT NULL 
+DROP TABLE #tmp
+
+CREATE TABLE #tmp
+(
+	^col int 
+)
+</Replacement>
+  <CursorPositionMarker>^</CursorPositionMarker>
+</AutoReplacement>
