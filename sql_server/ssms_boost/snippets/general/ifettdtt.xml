@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-16"?>
+<AutoReplacement xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Token>ifettdtt</Token>
+  <Name>if_exists_temp_table_drop_temp_table</Name>
+  <CaseSensitive>false</CaseSensitive>
+  <SelectReplacement>false</SelectReplacement>
+  <Replacement>IF OBJECt_ID('tempdb..#tmp') IS NOT NULL 
+DROP TABLE tmp
+GO</Replacement>
+  <CursorPositionMarker />
+</AutoReplacement>
