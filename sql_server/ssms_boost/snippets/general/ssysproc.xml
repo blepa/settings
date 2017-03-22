@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-16"?>
+<AutoReplacement xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Token>ssysproc</Token>
+  <Name>select_sys_procedures</Name>
+  <CaseSensitive>false</CaseSensitive>
+  <SelectReplacement>false</SelectReplacement>
+  <Replacement>SELECT	* 
+FROM	sys.procedures p
+WHERE	1 = 1
+		--AND p.name = 'procedure_name'
+		--AND p.name like ('%%')
+</Replacement>
+  <CursorPositionMarker />
+</AutoReplacement>
