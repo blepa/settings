@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<CodeSnippets  xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+	<CodeSnippet Format="1.0.0">
+		<Header>
+			<Title>sdbsize</Title>
+			<Shortcut>sdbsize</Shortcut>
+			<Description>Select database size in mb and gb (log size, data size, total size)</Description>
+			<Author>Bartosz Lepa</Author>
+			<SnippetTypes>
+				<SnippetType>Expansion</SnippetType>
+			</SnippetTypes>
+			</Header>
+		<Snippet>
+			<Declarations></Declarations>
+			<Code Language="SQL"><![CDATA[IF OBJECt_ID('tempdb..#tmp_db_size') IS NOT NULL 
+DROP TABLE #tmp_db_size
+GO
+
+SELECT 
+	DB_NAME(database_id) [database_name]
+,	CAST(SUM(CASE WHEN type_desc = 'LOG' THEN size END) * 8. / 1024.0 AS DECIMAL(16,2)) [log_size_mb]
+,	CAST(SUM(CASE WHEN type_desc = 'ROWS' THEN size END) * 8. / 1024.0 AS DECIMAL(16,2)) [row_size_mb]
+,	CAST(SUM(size) * 8. / 1024 AS DECIMAL(16,2)) [total_size_mb]
+INTO 
+	#tmp_db_size
+FROM	
+	sys.master_files m WITH(NOWAIT)
+WHERE 1 = 1
+--	AND m.database_id = DB_ID() -- current database	
+GROUP BY
+	m.database_id
+
+SELECT
+	t.*
+,	CAST( (log_size_mb/1024.0) AS decimal(16,2)) AS log_size_gb
+,	CAST( (row_size_mb/1024.0) AS decimal(16,2)) AS row_size_gb
+,	CAST( (total_size_mb/1024.0) AS decimal(16,2)) AS total_size_gb
+FROM	
+	#tmp_db_size t
+WHERE 1 = 1
+--	AND t.database_name IN ('')
+ORDER BY
+	t.[log_size_mb] DESC
+--	t.[total_size_mb] DESC
+--	t.[row_size_mb] DESC
+
+]]>
+			</Code>
+		</Snippet>
+	</CodeSnippet>
+</CodeSnippets>

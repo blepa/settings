@@ -2,9 +2,9 @@
 <CodeSnippets  xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
 	<CodeSnippet Format="1.0.0">
 		<Header>
-			<Title>ssysproc</Title>
-			<Shortcut>ssysproc</Shortcut>
-			<Description>Select from sys.procedures</Description>
+			<Title>stbrowcnt</Title>
+			<Shortcut>stbrowcnt</Shortcut>
+			<Description>Select row count of tables</Description>
 			<Author>Bartosz Lepa</Author>
 			<SnippetTypes>
 				<SnippetType>Expansion</SnippetType>
@@ -13,14 +13,16 @@
 		<Snippet>
 			<Declarations></Declarations>
 			<Code Language="SQL"><![CDATA[SELECT	
-	p.* 
-FROM
-	sys.procedures p
-WHERE 1 = 1
---	AND p.name = 'procedure_name'
---	AND p.name like ('%%')
+	t.name table_name
+,	ps.row_count row_count
+FROM	
+	sys.tables t
+INNER JOIN
+	sys.dm_db_partition_stats ps ON t.object_id = ps.object_id AND ps.index_id < 2 
+WHERE	1 = 1
+--	ps.row_count > 100
 ORDER BY 
-	p.name
+	ps.row_count DESC
 ]]>
 			</Code>
 		</Snippet>
