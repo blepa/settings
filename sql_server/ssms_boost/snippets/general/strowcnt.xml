@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-16"?>
+<AutoReplacement xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Token>strowcnt</Token>
+  <Name>select_row_count_of_table</Name>
+  <CaseSensitive>false</CaseSensitive>
+  <SelectReplacement>false</SelectReplacement>
+  <Replacement>SELECT	t.name table_name
+	,	ps.row_count row_count
+FROM	sys.tables AS t
+		INNER JOIN sys.dm_db_partition_stats ps  ON t.object_id = ps.object_id AND ps.index_id &lt; 2 
+WHERE	1 = 1
+		-- ps.row_count &gt; 100
+ORDER	BY ps.row_count DESC </Replacement>
+  <CursorPositionMarker />
+</AutoReplacement>
