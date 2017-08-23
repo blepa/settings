@@ -7,11 +7,11 @@ if object_id('tempdb..#tmp_job_2') is not null
 if object_id('tempdb..#tmp_job_history') is not null
 	drop table #tmp_job_history
 
-declare	@vstart_date varchar(8) = '20170404'
-declare @vstop_date varchar(8)  = '20170405'
+declare	@vstart_date varchar(8) = '20170406'
+declare @vstop_date varchar(8)  = '20170408'
 
-declare @vstart_datetime datetime = '2017-04-04 00:00:00'
-declare @vstop_datetime datetime = '2017-04-04 12:00:00'
+declare @vstart_datetime datetime = '2017-04-06 10:00:00'
+declare @vstop_datetime datetime = '2017-04-07 11:00:00'
 
 declare @tjob_list table 
 (
