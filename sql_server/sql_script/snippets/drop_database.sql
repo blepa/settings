@@ -1,4 +1,5 @@
-declare @vDatabaseName varchar(1000) = 'DataBaseName';
+-- set database to drop
+declare @vDatabaseName varchar(1000) = db_name();
 
 declare @vNewLine varchar(10) = CHAR(13)+CHAR(10);
 declare @vCmd varchar(max) = '';
