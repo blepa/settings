@@ -1,5 +1,5 @@
 declare
-  @ObjectName nvarchar(261)  = ''
+  @ObjectName nvarchar(261)  = 'stgdmsk.mask_tables'
 , @TargetObjectName nvarchar(261) = NULL
 , @OmmitInsertColumnList bit = 0
 , @GenerateSingleInsertPerRow bit = 1
@@ -31,12 +31,13 @@ declare @key_columns table
 	column_name varchar(200) not null
 )
 
+
 insert into @key_columns (column_name)
-select 'export_config_code'
+select 'mask_config_code'
 union all
-select 'source_full_export_object_name'
+select 'source_full_table_name'
 union all
-select 'target_full_object_name'
+select 'target_object_type'
 
 /*******************************************************************************
 Procedure: GenerateInsert (Build 6)
@@ -304,20 +305,23 @@ END
 CLOSE ColumnCursor;
 DEALLOCATE ColumnCursor;
 
-SELECT @WhereNotExists = 'WHERE NOT EXISTS (SELECT 1 FROM ' + @ObjectName + ' WHERE ' + SUBSTRING(@WhereNotExists,8,LEN(@WhereNotExists))
+SELECT @WhereNotExists = '+' + @CrLf + '''' + ' WHERE NOT EXISTS (SELECT 1 FROM ' + @ObjectName + ' WHERE ' + SUBSTRING(@WhereNotExists,8,LEN(@WhereNotExists))
+WHERE NULLIF(@WhereNotExists,'') IS NOT NULL;
 SELECT @WhereNotExists += '+' + '''' + ')' + ''''
+WHERE NULLIF(@WhereNotExists,'') IS NOT NULL;
 
-SELECT @InfoStmt =
-'+' + '''' +  ' IF @@ROWCOUNT != 0' + ' PRINT '+ '+' + '''' + '''' +  'Added row to ' + @ObjectName + '''' + '''' + '+' + '''' + '''' + 'key:' + @InfoStmt + '''' + '''' + ''''
-WHERE @GenerateInfo = 1;
+SELECT	@InfoStmt =
+'+' + '''' +  ' IF @@ROWCOUNT != 0' + ' PRINT '+ '+' + '''' + '''' +  'Added row to ' + @ObjectName + '''' + '''' + '+' + '''' + '''' + ';key:' + ISNULL(@InfoStmt,'') + '''' + '''' + ''''
+WHERE	@GenerateInfo = 1
+		AND NULLIF(@InfoStmt,'') IS NOT NULL
 
-print @InfoStmt
+SELECT	@InfoStmt = ''
+WHERE	@GenerateInfo = 0;
 
 
 IF NULLIF(@ColumnList,N'') IS NULL
 BEGIN
-  RAISERROR(N'No columns to select.',16,1);
-  
+  RAISERROR(N'No columns to select.',16,1);  
 END
 
 IF @Debug = 1
@@ -360,7 +364,7 @@ BEGIN
       ELSE N'+' + @CrLf + N''')'''
       END  
 	+ CASE WHEN @GenerateStatementTerminator = 1
-      THEN N'+'''
+      THEN N''
       ELSE N''
       END
 	+ CASE WHEN @GenerateGo = 1
