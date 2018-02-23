@@ -1,15 +1,16 @@
-declare 
-  @ObjectName nvarchar(261) = 'FAULT_LOG'
+
+declare
+  @ObjectName nvarchar(261)  = '[stgdmsk].[export_objects]'
 , @TargetObjectName nvarchar(261) = NULL
 , @OmmitInsertColumnList bit = 0
-, @GenerateSingleInsertPerRow bit = 0
-, @UseSelectSyntax bit = 0
+, @GenerateSingleInsertPerRow bit = 1
+, @UseSelectSyntax bit = 1
 , @UseColumnAliasInSelect bit = 0
 , @FormatCode bit = 1
 , @GenerateOneColumnPerLine bit = 0
 , @GenerateGo bit = 0
 , @PrintGeneratedCode bit = 1
-, @TopExpression nvarchar(max) = NULL
+, @TopExpression nvarchar(max) = 1000
 , @FunctionParameters nvarchar(max) = NULL
 , @SearchCondition nvarchar(max) = NULL
 , @OrderByExpression nvarchar(max) = NULL
@@ -21,9 +22,22 @@ declare
 , @GenerateSetNoCount bit = 1
 , @GenerateStatementTerminator bit = 1
 , @ShowWarnings bit = 1
+, @GenerateInfo bit = 1
 , @Debug bit = 0
 
-, @vwhere nvarchar(max) = N' where IDMessage =  ' + '''' + '29A7E5B0-1F19-4757-BBF3-431DF9597023' + ''''
+, @vwhere nvarchar(max) = null
+
+declare @key_columns table
+(
+	column_name varchar(200) not null
+)
+
+insert into @key_columns (column_name)
+select 'export_config_code'
+union all
+select 'source_full_export_object_name'
+union all
+select 'target_full_object_name'
 
 /*******************************************************************************
 Procedure: GenerateInsert (Build 6)
@@ -31,6 +45,7 @@ Decription: Generates INSERT statement(s) for data in a table.
 Purpose: To regenerate data at another location.
   To script data populated in automated way.
   To script setup data populated in automated/manual way.
+Project page: http://github.com/drumsta/sql-generate-insert
 Arguments:
   @ObjectName nvarchar(261)
     Format: [schema_name.]object_name
@@ -82,11 +97,11 @@ Arguments:
     One or more parameters can be specified.
     Example: @FunctionParameters='(1)' is equivalent to SELECT * FROMN ObjectName(1)
   @SearchCondition nvarchar(max) = NULL
-    When supplied then specifies the search condition for the rows --RETURNed by the query
+    When supplied then specifies the search condition for the rows returned by the query
     Format: <search_condition>
     Example: @SearchCondition='column1 != ''test''' is equivalent to WHERE column1 != 'test'
   @OrderByExpression nvarchar(max) = NULL
-    When supplied then sorts data --RETURNed by a query. The parameter doesn't apply to the ranking function like ROW_NUMBER, RANK, DENSE_RANK, and NTILE.
+    When supplied then sorts data returned by a query. The parameter doesn't apply to the ranking function like ROW_NUMBER, RANK, DENSE_RANK, and NTILE.
     Format: <order_by_expression>
     Example: @OrderByExpression='DATEPART(year, HireDate) DESC, LastName DESC COLLATE Latin1_General_CS_AS'
   @OmmitUnsupportedDataTypes bit = 1
@@ -147,11 +162,17 @@ DECLARE @Results table (TableRow nvarchar(max));
 DECLARE @TableRow nvarchar(max);
 DECLARE @RowNo int;
 
+DECLARE @WhereNotExists nvarchar(max) = '';
+DECLARE @InfoStmt nvarchar(max) = '';
+
+SELECT @InfoStmt +=
+'+' + '''' +  'IF @@ROWCOUNT != 0' + ' PRINT '+ '+' + '''' + '''' + 'Added row to ' + @ObjectName + '''' + '''' + ''''
+WHERE @GenerateInfo = 1;
+
 IF PARSENAME(@ObjectName,3) IS NOT NULL
   OR PARSENAME(@ObjectName,4) IS NOT NULL
 BEGIN
-  RAISERROR(N'Server and database names are not allowed to specify in @ObjectName parameter. Required format is [schema_name.]object_name',16,1);
-  --RETURN -1;
+  RAISERROR(N'Server and database names are not allowed to specify in @ObjectName parameter. Required format is [schema_name.]object_name',16,1);  
 END
 
 IF OBJECT_ID(@ObjectName,N'U') IS NULL -- USER_TABLE
@@ -160,7 +181,7 @@ IF OBJECT_ID(@ObjectName,N'U') IS NULL -- USER_TABLE
   AND OBJECT_ID(@ObjectName,N'TF') IS NULL -- SQL_TABLE_VALUED_FUNCTION
 BEGIN
   RAISERROR(N'User table, view, table-valued or inline function %s not found or insuficient permission to query the provided object.',16,1,@ObjectName);
-  --RETURN -1;
+  
 END
 
 IF NOT EXISTS (
@@ -181,7 +202,7 @@ IF NOT EXISTS (
 )
 BEGIN
   RAISERROR(N'User table, view, table-valued or inline function %s not found or insuficient permission to query the provided object.',16,1,@ObjectName);
-  --RETURN -1;
+  
 END
 
 DECLARE ColumnCursor CURSOR LOCAL FAST_FORWARD FOR
@@ -249,7 +270,7 @@ BEGIN
     AND @OmmitUnsupportedDataTypes != 1
   BEGIN
     RAISERROR(N'Datatype %s is not supported. Use @OmmitUnsupportedDataTypes to exclude unsupported columns.',16,1,@DataType);
-    --RETURN -1;
+    
   END
 
   IF @ColumnExpression IS NULL
@@ -272,6 +293,10 @@ BEGIN
       + @ColumnExpression
       + CASE WHEN @UseColumnAliasInSelect = 1 AND @UseSelectSyntax = 1 THEN N'+'' ' + QUOTENAME(@ColumnName) + N'''' ELSE N'' END
       + CASE WHEN @GenerateOneColumnPerLine = 1 THEN N'+CHAR(13)+CHAR(10)' ELSE N'' END;
+
+	SELECT	@WhereNotExists += '+' + '''' + ' AND ' +  k.column_name + '=' + '''' + ' + ' + @ColumnExpression
+	FROM	@key_columns k
+	WHERE	k.column_name = @ColumnName
   END
 
   FETCH NEXT FROM ColumnCursor INTO @ColumnName,@DataType;
@@ -280,10 +305,13 @@ END
 CLOSE ColumnCursor;
 DEALLOCATE ColumnCursor;
 
+SELECT @WhereNotExists = 'WHERE NOT EXISTS (SELECT 1 FROM ' + @ObjectName + ' WHERE ' + SUBSTRING(@WhereNotExists,8,LEN(@WhereNotExists))
+SELECT @WhereNotExists += '+' + '''' + ')' + ''''
+
 IF NULLIF(@ColumnList,N'') IS NULL
 BEGIN
   RAISERROR(N'No columns to select.',16,1);
-  --RETURN -1;
+  
 END
 
 IF @Debug = 1
@@ -313,8 +341,7 @@ BEGIN
       ELSE N'''(' + @ColumnList + N')''+' + @CrLf
       END
     + CASE WHEN @FormatCode = 1
-      THEN N'CHAR(13)+CHAR(10)+' + @CrLf
-      ELSE N''' ''+'
+      THEN N'CHAR(13)+CHAR(10)+' + @CrLf      
       END
     + CASE WHEN @UseSelectSyntax = 1
       THEN N'''' + @SelectSql + N'''+'
@@ -325,16 +352,17 @@ BEGIN
     + CASE WHEN @UseSelectSyntax = 1
       THEN N''
       ELSE N'+' + @CrLf + N''')'''
-      END
-    + CASE WHEN @GenerateStatementTerminator = 1
-      THEN N'+'';'''
+      END  
+	+ CASE WHEN @GenerateStatementTerminator = 1
+      THEN N'+'''
       ELSE N''
       END
-    + CASE WHEN @GenerateGo = 1
+	+ CASE WHEN @GenerateGo = 1
       THEN N'+' + @CrLf + N'CHAR(13)+CHAR(10)+' + @CrLf + N'''GO'''
       ELSE N''
       END
   ;
+
 END ELSE BEGIN
   SET @SelectList =
     CASE WHEN @UseSelectSyntax = 1
@@ -353,22 +381,28 @@ END
 SET @SelectStatement = N'SELECT'
   + CASE WHEN NULLIF(@TopExpression,N'') IS NOT NULL
     THEN N' TOP ' + @TopExpression
-    ELSE N'' END
+    ELSE N'' END 
   + @CrLf + @SelectList + @CrLf
-  + N'FROM ' + @ObjectName
+  + CASE WHEN NULLIF(@WhereNotExists,'') IS NOT NULL
+	THEN @WhereNotExists
+	ELSE N'' END 
+  + CASE WHEN NULLIF(@InfoStmt,'') IS NOT NULL
+	THEN @CrLf + @InfoStmt
+	ELSE N'' END
+  + @CrLf + N'FROM ' + @ObjectName
   + CASE WHEN NULLIF(@FunctionParameters,N'') IS NOT NULL
     THEN @FunctionParameters
-    ELSE N'' END
+    ELSE N'' END  
   + CASE WHEN NULLIF(@SearchCondition,N'') IS NOT NULL
-    THEN @CrLf + N'WHERE ' + @SearchCondition
+    THEN @CrLf + N'WHERE'	
+	
+	+ @SearchCondition
     ELSE N'' END
   + CASE WHEN NULLIF(@OrderByExpression,N'') IS NOT NULL
     THEN @CrLf + N'ORDER BY ' + @OrderByExpression
     ELSE N'' END
-  + @CrLf + N'' + @CrLf + @CrLf
+  + @CrLf + N';' + @CrLf + @CrLf
 ;
-
-select @SelectStatement += isnull(@vwhere, '')
 
 IF @Debug = 1
 BEGIN
@@ -378,12 +412,6 @@ END
 
 INSERT INTO @TableData
 EXECUTE (@SelectStatement);
-
-IF @GenerateProjectInfo = 1
-BEGIN
-  INSERT INTO @Results
-  SELECT N'--INSERTs generated by GenerateInsert (Build 6)'  
-END
 
 IF @GenerateSetNoCount = 1
 BEGIN
@@ -402,6 +430,7 @@ BEGIN
   INSERT INTO @Results
   SELECT TableRow
   FROM @TableData
+  
 END ELSE BEGIN
   IF @FormatCode = 1
   BEGIN
@@ -420,6 +449,7 @@ END ELSE BEGIN
       SELECT N'VALUES';
     END
   END ELSE BEGIN
+	
     INSERT INTO @Results
     SELECT @InsertSql
       + CASE WHEN @OmmitInsertColumnList = 1 THEN N'' ELSE N' (' + @ColumnList + N')' END
@@ -446,7 +476,7 @@ END ELSE BEGIN
       ELSE CASE WHEN @RowNo > 1 THEN N',' ELSE N' ' END END
       + @TableRow;
 
-    FETCH NEXT FROM DataCursor INTO @TableRow;
+    FETCH NEXT FROM DataCursor INTO @TableRow;	
   END
 
   CLOSE DataCursor;
@@ -537,13 +567,7 @@ BEGIN
   DEALLOCATE ResultsCursor;
 END ELSE BEGIN
   SELECT *
-  FROM @Results
+  FROM @Results;
 END
 
-
 END
-
-
-
-
-
