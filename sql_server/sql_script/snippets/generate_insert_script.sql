@@ -1,6 +1,5 @@
-
 declare
-  @ObjectName nvarchar(261)  = '[stgdmsk].[export_objects]'
+  @ObjectName nvarchar(261)  = ''
 , @TargetObjectName nvarchar(261) = NULL
 , @OmmitInsertColumnList bit = 0
 , @GenerateSingleInsertPerRow bit = 1
@@ -165,9 +164,6 @@ DECLARE @RowNo int;
 DECLARE @WhereNotExists nvarchar(max) = '';
 DECLARE @InfoStmt nvarchar(max) = '';
 
-SELECT @InfoStmt +=
-'+' + '''' +  'IF @@ROWCOUNT != 0' + ' PRINT '+ '+' + '''' + '''' + 'Added row to ' + @ObjectName + '''' + '''' + ''''
-WHERE @GenerateInfo = 1;
 
 IF PARSENAME(@ObjectName,3) IS NOT NULL
   OR PARSENAME(@ObjectName,4) IS NOT NULL
@@ -269,8 +265,7 @@ BEGIN
   IF @ColumnExpression IS NULL
     AND @OmmitUnsupportedDataTypes != 1
   BEGIN
-    RAISERROR(N'Datatype %s is not supported. Use @OmmitUnsupportedDataTypes to exclude unsupported columns.',16,1,@DataType);
-    
+    RAISERROR(N'Datatype %s is not supported. Use @OmmitUnsupportedDataTypes to exclude unsupported columns.',16,1,@DataType);   
   END
 
   IF @ColumnExpression IS NULL
@@ -297,6 +292,10 @@ BEGIN
 	SELECT	@WhereNotExists += '+' + '''' + ' AND ' +  k.column_name + '=' + '''' + ' + ' + @ColumnExpression
 	FROM	@key_columns k
 	WHERE	k.column_name = @ColumnName
+
+	SELECT	@InfoStmt += k.column_name + ';' 
+	FROM	@key_columns k
+	WHERE	k.column_name = @ColumnName
   END
 
   FETCH NEXT FROM ColumnCursor INTO @ColumnName,@DataType;
@@ -307,6 +306,13 @@ DEALLOCATE ColumnCursor;
 
 SELECT @WhereNotExists = 'WHERE NOT EXISTS (SELECT 1 FROM ' + @ObjectName + ' WHERE ' + SUBSTRING(@WhereNotExists,8,LEN(@WhereNotExists))
 SELECT @WhereNotExists += '+' + '''' + ')' + ''''
+
+SELECT @InfoStmt =
+'+' + '''' +  ' IF @@ROWCOUNT != 0' + ' PRINT '+ '+' + '''' + '''' +  'Added row to ' + @ObjectName + '''' + '''' + '+' + '''' + '''' + 'key:' + @InfoStmt + '''' + '''' + ''''
+WHERE @GenerateInfo = 1;
+
+print @InfoStmt
+
 
 IF NULLIF(@ColumnList,N'') IS NULL
 BEGIN
@@ -362,7 +368,7 @@ BEGIN
       ELSE N''
       END
   ;
-
+  
 END ELSE BEGIN
   SET @SelectList =
     CASE WHEN @UseSelectSyntax = 1
@@ -387,7 +393,7 @@ SET @SelectStatement = N'SELECT'
 	THEN @WhereNotExists
 	ELSE N'' END 
   + CASE WHEN NULLIF(@InfoStmt,'') IS NOT NULL
-	THEN @CrLf + @InfoStmt
+	THEN @InfoStmt
 	ELSE N'' END
   + @CrLf + N'FROM ' + @ObjectName
   + CASE WHEN NULLIF(@FunctionParameters,N'') IS NOT NULL
