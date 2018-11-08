@@ -1,6 +1,6 @@
 if object_id('tempdb..#tmp_loginfo') is not null drop table #tmp_loginfo
 
-declare @c_accountname varchar(1000) = 'PL\X040758'
+declare @c_accountname varchar(1000) = --login name
 declare @v_groupname varchar(1000)
 
 create table #tmp_loginfo 
