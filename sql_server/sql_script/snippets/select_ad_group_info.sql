@@ -23,9 +23,6 @@ select	p.name, 0
 from	sys.database_principals p
 where	p.type = 'G'
 
-
-
-
 while exists ( select 1 from @groups where is_processed = 0 )
 begin
 	select	@v_groupname = g.name
@@ -56,3 +53,13 @@ from	sys.database_role_members rm
 where	p1.type = 'R' 
 		and t.[account name] = @c_accountname		
 order	by p1.name
+
+--role for user 
+select	p1.name db_role_name
+	,	p2.name member_name
+from	sys.database_role_members rm 
+		join sys.database_principals p1 on rm.role_principal_id = p1.principal_id
+		join sys.database_principals p2 on rm.member_principal_id  = p2.principal_id		
+where	p1.type = 'R' 
+		and p2.name = @c_accountname		
+order	by p2.name
