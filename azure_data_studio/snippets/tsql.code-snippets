@@ -1,0 +1,72 @@
+{
+	// Place your global snippets here. Each snippet is defined under a snippet name and has a scope, prefix, body and 
+	// description. Add comma separated ids of the languages where the snippet is applicable in the scope field. If scope 
+	// is left empty or omitted, the snippet gets applied to all languages. The prefix is what is 
+	// used to trigger the snippet and the body will be expanded and inserted. Possible variables are: 
+	// $1, $2 for tab stops, $0 for the final cursor position, and ${1:label}, ${2:another} for placeholders. 
+	// Placeholders with the same ids are connected.
+	// Example:
+	// "Print to console": {
+	// 	"scope": "javascript,typescript",
+	// 	"prefix": "log",
+	// 	"body": [
+	// 		"console.log('$1');",
+	// 		"$2"
+	// 	],
+	// 	"description": "Log output to console"
+	// }
+	"select_object_dependencies_child": {
+		"prefix": "sobjdepch",
+		"body": [
+"declare @object_name_full nvarchar(300) = '[${1:schema_name}].[${2:table_name}]';",
+"with dependencies_cte as (",
+"select  root_object_id = object_id(@object_name_full)",
+"    ,   referenced_id  = d.referenced_id",
+"    ,   referencing_id = d.referencing_id",
+"    ,   root_object_name = '[' + object_schema_name(object_id(@object_name_full)) + '].[' + object_name(object_id(@object_name_full)) + ']'",
+"    ,   parent_object_name = '[' + object_schema_name(d.referenced_id) + '].[' + object_name(d.referenced_id) + ']'",
+"    ,   ref_path = cast('[' +  object_schema_name(d.referenced_id) + '].[' + object_name(d.referenced_id) + ']' as nvarchar(max))",
+"    ,   ref_object_name_full = '[' +  object_schema_name(d.referencing_id) + '].[' + object_name(d.referencing_id) + ']'",
+"    ,   ref_object_type_desc =  o.type_desc",
+"    ,   level = cast(0 as smallint)",
+"    ,   collect_timestamp_utc = getutcdate()",
+"from    sys.sql_expression_dependencies d",
+"join    sys.all_objects o on d.referencing_id = o.object_id",
+"where   d.referenced_id = object_id(@object_name_full)",
+"union all",
+"select  root_object_id = object_id(@object_name_full)",
+"    ,   referenced_id = d.referenced_id",
+"    ,   referencing_id = d.referencing_id",
+"    ,   root_object_name = cte.root_object_name",
+"    ,   parent_object_id = '[' + object_schema_name(d.referenced_id) + '].[' + object_name(d.referenced_id) + ']'",
+"    ,   ref_path = cte.ref_path + '/'  + '[' +  object_schema_name(d.referenced_id) + '].[' + object_name(d.referenced_id) + ']'",
+"    ,   ref_object_name_full = '[' +  object_schema_name(d.referencing_id) + '].[' + object_name(d.referencing_id) + ']'",
+"    ,   ref_object_type_desc =  o.type_desc",
+"    ,   level = cte.level + cast(1 as smallint)",
+"    ,   collect_timestamp_utc = cte.collect_timestamp_utc",
+"from    sys.sql_expression_dependencies d ",
+"join    dependencies_cte cte on d.referenced_id = cte.referencing_id",
+"join    sys.all_objects o on d.referencing_id = o.object_id",
+")",
+"-- all ",
+"select  d.root_object_name  ",
+"    ,   d.parent_object_name",
+"    ,   d.ref_path",
+"    ,   d.ref_object_name_full",
+"    ,   d.ref_object_type_desc",
+"    ,   d.collect_timestamp_utc",
+"    ,   d.level",
+"from    dependencies_cte d;",
+"/*",
+"-- distinct",
+"select  distinct",
+"        d.ref_object_name_full",
+"    ,   d.ref_object_type_desc",
+"from    dependencies_cte d",
+"*/"
+		],
+		"description": "get all childs dependecies for object"
+	}
+
+
+}
