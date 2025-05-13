@@ -1,7 +1,8 @@
 
 [
   {
-    "key": "ctrl+k mand": "workbench.action.toggleSidebarVisibility"
+    "key": "ctrl+k b",
+    "command": "workbench.action.toggleSidebarVisibility"
   },
   //Termianl
   {
