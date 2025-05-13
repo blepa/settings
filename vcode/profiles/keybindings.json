@@ -1,0 +1,100 @@
+
+[
+  {
+    "key": "ctrl+k mand": "workbench.action.toggleSidebarVisibility"
+  },
+  //Termianl
+  {
+    "key": "ctrl+`",
+    "command": "workbench.action.terminal.focus",
+    "when": "editorTextFocus" }, { "key": "ctrl+shift+`", "command": "workbench.action.terminal.new",
+    "when": "terminalProcessSupported || terminalWebExtensionContributedProfile"
+  },
+  {
+    "key": "ctrl+shift+`",
+    "command": "workbench.action.createTerminalEditor",
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "ctrl+'",
+    "command": "workbench.action.terminal.toggleTerminal",
+    "when": "!terminalFocus"
+  },
+  {
+    "key": "ctrl+'",
+    "command": "workbench.action.terminal.toggleTerminal",
+    "when": "terminalFocus"
+  },
+  {
+    "key": "alt+`", //opt+` on macOS
+    "command": "workbench.action.toggleMaximizedPanel"
+  },
+  {
+    "key": "ctrl+alt+`", //ctrl+opt+` on macOS
+    "command": "workbench.action.terminal.toggleTerminal"
+  },
+  {
+    "key": "ctrl+\\",
+    "command": "workbench.action.terminal.split",
+    "when": "terminalFocus"
+  },
+  {
+    "key": "ctrl+space",
+    "command": "workbench.action.terminal.runRecentCommand",
+    "when": "terminalFocus"
+  },
+  {
+    "key": "ctrl+w",
+    "command": "workbench.action.terminal.kill",
+    "when": "terminalFocus"
+  },
+  {
+    "key": "ctrl+k ctrl+w",
+    "command": "workbench.action.terminal.killAll",
+    "when": "terminalFocus"
+  },
+  // After that any time when in terminal press ctrl+alt+a to edit all terminal output in vs code newly created unsaved file.
+  {
+    "key": "ctrl+alt+a",
+    "command": "runCommands",
+    "args": {
+      "commands": [
+        {
+          "command": "workbench.action.terminal.selectAll",
+        },
+        {
+          "command": "editor.action.clipboardCopyAction"
+        },
+        {
+          "command": "workbench.action.files.newUntitledFile"
+        },
+        {
+          "command": "editor.action.clipboardPasteAction"
+        }
+      ]
+    }
+  },
+  {
+    "key": "ctrl+p p",
+    "command": "workbench.action.quickOpen"
+  },
+  {
+    "key": "ctrl+p",
+    "command": "-workbench.action.quickOpen"
+  },
+  {
+    "key": "ctrl+w",
+    "command": "-extension.vim_ctrl+w",
+    "when": "editorTextFocus && vim.active && vim.use<C-w> && !inDebugRepl"
+},
+{
+    "key": "ctrl+up",
+    "command": "-sqldeveloper.worksheet.sqlHistory.up",
+    "when": "sqldeveloper.activeEditorType == 'sqlWorksheet'"
+},
+{
+    "key": "ctrl+down",
+    "command": "-sqldeveloper.worksheet.sqlHistory.down",
+    "when": "sqldeveloper.activeEditorType == 'sqlWorksheet'"
+}
+]

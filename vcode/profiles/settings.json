@@ -1,0 +1,40 @@
+{
+    // editor
+    "editor.minimap.enabled": false,
+    "editor.lineNumbers": "relative",
+    "editor.fontFamily": "JetBrains Mono",
+    "editor.fontLigatures": true,
+    // terminal
+    "terminal.integrated.fontFamily": "JetBrains Mono",
+    "terminal.integrated.fontLigatures.enabled": true,
+    "terminal.integrated.fontWeightBold": "normal",
+    // zen mode
+    "zenMode.fullScreen": true,
+    "zenMode.showTabs": "single",
+    "zenMode.centerLayout": false,
+    "zenMode.hideLineNumbers": false,
+    "workbench.colorTheme": "Best Themes - Github Dark",
+    "[json]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    // vim
+    "vim.useCtrlKeys": false,
+    "jupyter.jupyterLaunchTimeout": 600000,
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+    },
+    "black-formatter.showNotifications": "always",
+    "black-formatter.args": [
+        "--line-length 179"
+    ],
+    "mssql.connectionGroups": [
+        {
+            "name": "ROOT",
+            "id": "804BA001-73D1-4074-895C-34DB79667208"
+        }
+    ],
+    "mssql.connections": [],
+    "[jsonc]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+}
